@@ -1,7 +1,9 @@
+const fs = require('fs')
+const path = require('path')
 const { getAst, getDeps, getCode } = require('./parser')
 
 class Compiler {
-  constructor(options) {
+  constructor (options) {
     this.options = options
     this.modules = []
   }
@@ -39,10 +41,10 @@ class Compiler {
         code,
         deps,
       }
-      console.log('@@@@---e', code)
       return prevValue
     }, {})
-    console.log('@@@@', depsGraph)
+
+    this.genarate(depsGraph)
   }
 
   build (filePath) {
@@ -77,14 +79,24 @@ class Compiler {
       console.log('@@@@todo', (0, _todo["default"])('jianfehuang', 'hahahhaxxxx'));
      */
     const bundle = `(function(depsGraph){
-      function require(filePath){
-        eval(depsGraph[filePath].code)
+      function require(module){
+        var exports = {}
+
+        function localRequire(relativePath) {
+          return require(depsGraph[module].deps[relativePath])
+        }
+
+        (function(require, exports, code){
+          eval(code)
+        })(localRequire, exports, depsGraph[module].code)
+
+        return exports
       }
 
-      require(${this.options.entry})
+      require("${this.options.entry}")
     })(${JSON.stringify(depsGraph)})`
 
-
+    fs.writeFileSync(path.resolve(this.options.output.path, this.options.output.filename), bundle, 'utf-8')
 
   }
 }
