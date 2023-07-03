@@ -10,14 +10,24 @@
 
 <body>
   <div>
-    <h1>test2</h1>
-    <canvas>
-      不支持canvas
-    </canvas>
+    <h1>test3</h1>
+    <div style="width:1044px;height:296px;margin:0 auto;">
+      <canvas id="canvas-viewer" width="1044px" height="296px">
+        不支持canvas
+      </canvas>
+    </div>
   </div>
 </body>
 <script>
-  console.log('@@@@test')
+  const $canvas = document.getElementById('canvas-viewer')
+  const ctx = $canvas.getContext('2d')
+  // 创建路径 
+  ctx.beginPath();
+  ctx.moveTo(46, 82)
+  ctx.lineTo(46 + 906, 82)
+  // ctx.globalAlpha = 1.0
+  ctx.strokeStyle = 'rgba(54,109,244,1)'
+  ctx.stroke();
 </script>
 
 </html>
