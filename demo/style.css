@@ -358,7 +358,7 @@ section {
   display: inline-block;
   width: 8px;
   height: 18px;
-  background-color: red;
+  background-color: rgb(209, 213, 219);
   animation: cursor-flicker 0.8s infinite;
 }
 /* 光标 end -------------------------------------------- */

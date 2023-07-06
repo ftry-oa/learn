@@ -50,7 +50,8 @@ document.addEventListener('keydown', (e) => {
       alert('没有需要发送的消息')
       return
     }
-    alert(`发送消息：${value}`)
+    // alert(`发送消息：${value}`)
+    getResponse(value)
     // 清空消息
     $textarea.value = ''
     // 清空消息后，注意还原textarea输入框的高度
@@ -59,3 +60,50 @@ document.addEventListener('keydown', (e) => {
     handleActiveBtn({ value: '' })
   }
 }, false)
+
+let $text = null
+let typingEffect = null
+let message = ''
+let index = 0
+const print2Screen = (newMessage) => {
+  if (!$text) {
+    $text = document.getElementById('answer-content-1')
+  }
+  if (message && typingEffect) {
+    message += newMessage
+    return
+  } else {
+    message = newMessage
+  }
+  typingEffect = setInterval(function () {
+    // 如果所有字符都已添加，停止 setInterval
+    if (index >= message.length) {
+      clearInterval(typingEffect)
+      message = ''
+      index = 0
+    } else {
+      // 否则，添加下一个字符
+      let textNode = document.createTextNode(message[index]);
+      $text.appendChild(textNode);
+      index++;
+    }
+  }, 50); // 每 100 毫秒添加一个字符
+}
+
+const getResponse = async (ask) => {
+  fetch('http://localhost:3000')
+    .then((response) => response.body)
+    .then(async (body) => {
+      let reader = body.getReader()
+      while (true) {
+        const { value, done } = await reader.read();
+        const decoder = new TextDecoder(); // 默认编码是 'utf-8'
+        const str = decoder.decode(value);
+        console.log('@@@@value', str)
+        print2Screen(str)
+        if (done) {
+          break
+        }
+      }
+    })
+}
