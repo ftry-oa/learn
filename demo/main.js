@@ -82,9 +82,7 @@ const appendQuestion = (question) => {
       style="width:30px" alt="">
   </div>
   <div class="chat-content">
-    <div class="text-content">
-      ${question}
-    </div>
+    <div class="text-content ask-text-content">${question}</div>
   </div>
 </div>`
   $chatBox.appendChild($questionEle)

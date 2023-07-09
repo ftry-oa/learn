@@ -346,6 +346,9 @@ section {
 /* icon css end    -------------------------------------- */
 
 /* 光标 start -------------------------------------------- */
+.ask-text-content {
+  white-space: pre-wrap;
+}
 @keyframes cursor-blink {
   0%, 100% {
     opacity: 0;
@@ -367,11 +370,4 @@ section {
   background-color: rgb(209, 213, 219);
   animation: cursor-blink 0.8s infinite;
 }
-/* .mock-cursor {
-  display: inline-block;
-  width: 8px;
-  height: 18px;
-  background-color: rgb(209, 213, 219);
-  animation: cursor-flicker 0.8s infinite;
-} */
 /* 光标 end -------------------------------------------- */
