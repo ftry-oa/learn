@@ -51,7 +51,8 @@ document.addEventListener('keydown', (e) => {
       return
     }
     // alert(`发送消息：${value}`)
-    getResponse(value)
+    // getResponse(value)
+    handleChat(value)
     // 清空消息
     $textarea.value = ''
     // 清空消息后，注意还原textarea输入框的高度
@@ -61,37 +62,105 @@ document.addEventListener('keydown', (e) => {
   }
 }, false)
 
-let $text = null
-let typingEffect = null
+// 聊天逻辑实现 start --------------------------------------------------
+let $chatBox = null
+const scroll2Bottom = () => {
+  if (!$chatBox) {
+    $chatBox = document.getElementById('chat-box')
+  }
+  $chatBox.scrollTop = $chatBox.scrollHeight
+}
+// 提问
+const appendQuestion = (question) => {
+  const $chatBox = document.getElementById('chat-box')
+  const $questionEle = document.createElement('div')
+  $questionEle.setAttribute('class', 'chat-item ask')
+  $questionEle.innerHTML = `<div class="chat-inner-item">
+  <div class="chat-img">
+    <img
+      src="https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fc-ssl.duitang.com%2Fuploads%2Fblog%2F202103%2F23%2F20210323142848_6a340.thumb.1000_0.jpeg&refer=http%3A%2F%2Fc-ssl.duitang.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1688969056&t=022c786aec872cde374f6a8ff3a70b17"
+      style="width:30px" alt="">
+  </div>
+  <div class="chat-content">
+    <div class="text-content">
+      ${question}
+    </div>
+  </div>
+</div>`
+  $chatBox.appendChild($questionEle)
+  scroll2Bottom()
+}
+
+// 回答
+const appendAnswer = () => {
+  const $chatBox = document.getElementById('chat-box')
+  const $answerEle = document.createElement('div')
+  $answerEle.setAttribute('class', 'chat-item answer')
+  $answerEle.innerHTML = `<div class="chat-inner-item">
+  <div class="chat-img">
+    <img src="https://i-1.rar8.net/2023/2/24/e7a2033b-c04e-418c-a1a8-0c3a109557d1.png" style="width:30px"
+      alt="">
+  </div>
+  <div class="chat-content">
+    <div class="text-content">
+    </div>
+    <div class="chat-op">
+      <span><svg class="iconpark-icon">
+          <use href="#copy"></use>
+        </svg></span>
+      <span><svg class="iconpark-icon">
+          <use href="#zan"></use>
+        </svg></span>
+      <span><svg class="iconpark-icon">
+          <use href="#cai"></use>
+        </svg></span>
+    </div>
+  </div>
+</div>`
+  const $textContent = $answerEle.querySelector('.text-content')
+  $chatBox.append($answerEle)
+  return {
+    $textContent,
+  }
+}
+
+const handleChat = (question) => {
+  appendQuestion(question)
+  const { $textContent } = appendAnswer()
+  getResponse({ question, $textContent })
+}
+
+let typingTimer = null
 let message = ''
 let index = 0
-const print2Screen = (newMessage) => {
-  if (!$text) {
-    $text = document.getElementById('answer-content-1')
-  }
-  if (message && typingEffect) {
+const typing2Screen = ($dom, newMessage) => {
+  if (message && typingTimer) {
     message += newMessage
     return
   } else {
     message = newMessage
   }
-  typingEffect = setInterval(function () {
+  typingTimer = setInterval(function () {
     // 如果所有字符都已添加，停止 setInterval
     if (index >= message.length) {
-      clearInterval(typingEffect)
+      clearInterval(typingTimer)
       message = ''
       index = 0
     } else {
       // 否则，添加下一个字符
       let textNode = document.createTextNode(message[index]);
-      $text.appendChild(textNode);
+      $dom.appendChild(textNode);
       index++;
     }
+    scroll2Bottom()
   }, 50); // 每 100 毫秒添加一个字符
 }
 
-const getResponse = async (ask) => {
-  fetch('http://localhost:3000')
+const getResponse = async ({ question, $textContent }) => {
+  const $text = document.createElement('div')
+  $text.setAttribute('class', 'cursor')
+  $textContent.appendChild($text)
+  fetch(`http://localhost:3000?question=${question}`)
     .then((response) => response.body)
     .then(async (body) => {
       let reader = body.getReader()
@@ -99,11 +168,14 @@ const getResponse = async (ask) => {
         const { value, done } = await reader.read();
         const decoder = new TextDecoder(); // 默认编码是 'utf-8'
         const str = decoder.decode(value);
-        console.log('@@@@value', str)
-        print2Screen(str)
+        // console.log('@@@@value', str)
+        typing2Screen($text, str)
         if (done) {
+          $text.setAttribute('class', '')
           break
         }
       }
     })
 }
+
+// 聊天逻辑实现 end --------------------------------------------------

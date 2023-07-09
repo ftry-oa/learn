@@ -346,7 +346,7 @@ section {
 /* icon css end    -------------------------------------- */
 
 /* 光标 start -------------------------------------------- */
-@keyframes cursor-flicker {
+@keyframes cursor-blink {
   0%, 100% {
     opacity: 0;
   }
@@ -354,11 +354,24 @@ section {
     opacity: 1;
   }
 }
-.mock-cursor {
+.cursor {
+
+}
+.cursor::after {
+  position: relative;
+  top: 3px;
+  content: ' ';
+  display: inline-block;
+  width: 8px;
+  height: 18px;
+  background-color: rgb(209, 213, 219);
+  animation: cursor-blink 0.8s infinite;
+}
+/* .mock-cursor {
   display: inline-block;
   width: 8px;
   height: 18px;
   background-color: rgb(209, 213, 219);
   animation: cursor-flicker 0.8s infinite;
-}
+} */
 /* 光标 end -------------------------------------------- */
