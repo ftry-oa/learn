@@ -51,7 +51,6 @@ document.addEventListener('keydown', (e) => {
       return
     }
     // alert(`发送消息：${value}`)
-    // getResponse(value)
     handleChat(value)
     // 清空消息
     $textarea.value = ''
@@ -62,19 +61,18 @@ document.addEventListener('keydown', (e) => {
   }
 }, false)
 
-// 聊天逻辑实现 start --------------------------------------------------
-let $chatBox = null
+// 聊天逻辑实现 start ---------------------------------------
+// 滚动到底部
 const scroll2Bottom = () => {
-  if (!$chatBox) {
-    $chatBox = document.getElementById('chat-box')
-  }
+  const $chatBox = document.getElementById('chat-box')
   $chatBox.scrollTop = $chatBox.scrollHeight
 }
-// 提问
+// 提问逻辑
 const appendQuestion = (question) => {
   const $chatBox = document.getElementById('chat-box')
   const $questionEle = document.createElement('div')
   $questionEle.setAttribute('class', 'chat-item ask')
+  // 提问HTML模版
   $questionEle.innerHTML = `<div class="chat-inner-item">
   <div class="chat-img">
     <img
@@ -86,14 +84,16 @@ const appendQuestion = (question) => {
   </div>
 </div>`
   $chatBox.appendChild($questionEle)
+  // 提问完成后，有时内容很多，需要滚动到最顶部，让新增的提问可见
   scroll2Bottom()
 }
 
-// 回答
+// 回答模版
 const appendAnswer = () => {
   const $chatBox = document.getElementById('chat-box')
   const $answerEle = document.createElement('div')
   $answerEle.setAttribute('class', 'chat-item answer')
+  // 回答的HTML模版
   $answerEle.innerHTML = `<div class="chat-inner-item">
   <div class="chat-img">
     <img src="https://i-1.rar8.net/2023/2/24/e7a2033b-c04e-418c-a1a8-0c3a109557d1.png" style="width:30px"
@@ -116,16 +116,10 @@ const appendAnswer = () => {
   </div>
 </div>`
   const $textContent = $answerEle.querySelector('.text-content')
-  $chatBox.append($answerEle)
+  $chatBox.appendChild($answerEle)
   return {
     $textContent,
   }
-}
-
-const handleChat = (question) => {
-  appendQuestion(question)
-  const { $textContent } = appendAnswer()
-  getResponse({ question, $textContent })
 }
 
 let typingTimer = null
@@ -135,40 +129,44 @@ const typing2Screen = ($dom, newMessage) => {
   if (message && typingTimer) {
     message += newMessage
     return
-  } else {
-    message = newMessage
   }
-  typingTimer = setInterval(function () {
-    // 如果所有字符都已添加，停止 setInterval
+  message = newMessage
+  typingTimer = setInterval(() => {
+    // 已经全部输出，停止定时器
     if (index >= message.length) {
       clearInterval(typingTimer)
+      typingTimer = null
       message = ''
       index = 0
     } else {
-      // 否则，添加下一个字符
-      let textNode = document.createTextNode(message[index]);
-      $dom.appendChild(textNode);
-      index++;
+      // 一个一个字符输出到页面上
+      const textNode = document.createTextNode(message[index])
+      $dom.appendChild(textNode)
+      index++
     }
+    // 输出时也自动滚动
     scroll2Bottom()
-  }, 50); // 每 100 毫秒添加一个字符
+  }, 50) // 每50毫秒输出一个字符
 }
 
 const getResponse = async ({ question, $textContent }) => {
   const $text = document.createElement('div')
+  // 加上光标样式
   $text.setAttribute('class', 'cursor')
   $textContent.appendChild($text)
   fetch(`http://localhost:3000?question=${question}`)
     .then((response) => response.body)
     .then(async (body) => {
       let reader = body.getReader()
+      // 递归读取分片数据
       while (true) {
-        const { value, done } = await reader.read();
-        const decoder = new TextDecoder(); // 默认编码是 'utf-8'
-        const str = decoder.decode(value);
-        // console.log('@@@@value', str)
+        const { value, done } = await reader.read()
+        const decoder = new TextDecoder()
+        const str = decoder.decode(value)
+        // 输出到页面上
         typing2Screen($text, str)
         if (done) {
+          // 回答结束，去掉光标效果
           $text.setAttribute('class', '')
           break
         }
@@ -176,4 +174,12 @@ const getResponse = async ({ question, $textContent }) => {
     })
 }
 
-// 聊天逻辑实现 end --------------------------------------------------
+// 聊天入口
+const handleChat = (question) => {
+  // 提问
+  appendQuestion(question)
+  const { $textContent } = appendAnswer()
+  // 拉取数据实现输出
+  getResponse({ question, $textContent })
+}
+// 聊天逻辑实现 end -----------------------------------------
