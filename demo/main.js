@@ -122,38 +122,391 @@ const appendAnswer = () => {
   }
 }
 
-let typingTimer = null
-let message = ''
-let index = 0
-const typing2Screen = ($dom, newMessage) => {
-  if (message && typingTimer) {
-    message += newMessage
-    return
-  }
-  message = newMessage
-  typingTimer = setInterval(() => {
-    // 已经全部输出，停止定时器
-    if (index >= message.length) {
-      clearInterval(typingTimer)
-      typingTimer = null
-      message = ''
-      index = 0
-    } else {
-      // 一个一个字符输出到页面上
-      const textNode = document.createTextNode(message[index])
-      $dom.appendChild(textNode)
-      index++
+const cursorHandler = {
+  addCursor: ($dom) => {
+    if (!$dom) {
+      return
     }
-    // 输出时也自动滚动
-    scroll2Bottom()
-  }, 50) // 每50毫秒输出一个字符
+    $dom.setAttribute('class', 'cursor')
+  },
+  removeCursor: ($dom) => {
+    if (!$dom) {
+      return
+    }
+    $dom.setAttribute('class', '')
+  },
 }
 
+// 策略模式
+const createElementHandler = {
+  paragraph: () => {
+    return document.createElement('p')
+  },
+  heading: ({ token }) => {
+    return document.createElement(`h${token.depth}`)
+  },
+  blockquote: () => {
+    return document.createElement('blockquote')
+  },
+  list: ({ token, tokenList, tokenIndex }) => {
+    const items = token.items || []
+    const doms = []
+    items.forEach((listInnerItem) => {
+      if ('list_item' === listInnerItem.type) {
+        doms.push(document.createElement('li'))
+        doms.innerText = listInnerItem.text
+      }
+    })
+    let $listBox = null
+    // todo
+  },
+}
+
+// let typingTimer = null
+// // let message = ''
+// let list = []
+// let index = 0
+
+// const clear = () => {
+//   clearInterval(typingTimer)
+//   typingTimer = null
+//   index = 0
+//   list = []
+// }
+
+// const typing2Screen = ($dom, tokens) => {
+//   list = list.concat(...tokens)
+//   if (tokens && typingTimer) {
+//     // message += newMessage
+//     return
+//   }
+//   // message = newMessage
+//   let curToken = list[index]
+//   let lineIndex = 0
+//   let $lineDom = null
+//   let message = curToken.text || ''
+//   typingTimer = setInterval(() => {
+//     // if (index >= list.length) {
+//     //   console.log('end1', list, index)
+//     //   clear()
+//     //   return
+//     // }
+//     if (curToken && !$lineDom) {
+//       // $lineDom = document.createElement('p')
+//       if (!createElementHandler[curToken.type]) {
+//         index += 1
+//         curToken = list[index]
+//         // if (!curToken) {
+//         //   return
+//         // }
+//         lineIndex = 0
+//         if (curToken && !curToken.concatPrevLine) {
+//           cursorHandler.removeCursor($lineDom)
+//           $lineDom = null
+//         }
+//         message = curToken.text || ''
+//         return
+//       }
+//       $lineDom = createElementHandler[curToken.type](curToken)
+//       cursorHandler.addCursor($lineDom)
+//       $dom.appendChild($lineDom)
+//     }
+//     if (lineIndex >= message.length) {
+//       console.log('@@@@prev line info', message, lineIndex)
+//       console.log('@@@@line end', JSON.stringify({ index, len: list?.length }))
+//       if (index >= list.length) {
+//         // 已经全部输出，停止定时器
+//         // clearInterval(typingTimer)
+//         // typingTimer = null
+//         // index = 0
+//         // list = []
+//         console.log('end2', JSON.stringify({
+//           list, index,
+//         }))
+//         clear()
+//         cursorHandler.removeCursor($lineDom)
+//         $lineDom = null
+//         return
+//       }
+//       // 下一行的输出
+//       index += 1
+//       curToken = list[index]
+//       if (!curToken) {
+//         return
+//       }
+//       lineIndex = 0
+//       if (curToken && !curToken.concatPrevLine) {
+//         cursorHandler.removeCursor($lineDom)
+//         $lineDom = null
+//       }
+//       message = curToken.text || ''
+//     } else {
+//       // 该行一个一个字符输出到页面上
+//       const textNode = document.createTextNode(message[lineIndex])
+//       $lineDom.appendChild(textNode)
+//       lineIndex++
+//     }
+//     // 输出时也自动滚动
+//     scroll2Bottom()
+//   }, 50) // 每50毫秒输出一个字符
+// }
+
+// 单例
+const typingHandler = {
+  typing: false,
+  typingTimer: null,
+  $prevDom: null,
+  typingParents: [],
+  // 输出到页面上
+  typingLine ({ $dom, token, tokenList, tokenIndex }) {
+    if (!createElementHandler[token.type]) {
+      console.warn(`暂不支持这种类型哟`, token.type, token)
+      printHandler.update(this)
+      return
+    }
+    let lineIndex = 0
+    let $lineDom = createElementHandler[token.type]({ token, tokenList, tokenIndex })
+    if (token.concatPrevLine) {
+      $lineDom = this.$prevDom
+    }
+    // 对token对象实例产生副作用，增加属性标记所属的dom
+    token.$dom = $lineDom
+    cursorHandler.addCursor($lineDom)
+    $dom.appendChild($lineDom)
+    let message = token.text || ''
+    // 设置为正在打印中
+    this.typing = true
+    this.typingTimer = setInterval(() => {
+      if (lineIndex >= message.length) {
+        // 设置为打印完了
+        this.typing = false
+        clearInterval(this.typingTimer)
+        this.typingTimer = null
+        cursorHandler.removeCursor($lineDom)
+        this.$prevDom = $lineDom
+        // 发布结束的通知
+        printHandler.update(this)
+        return
+      }
+      // 该行一个一个字符输出到页面上
+      const textNode = document.createTextNode(message[lineIndex])
+      $lineDom.appendChild(textNode)
+      lineIndex++
+      // 输出时也自动滚动
+      scroll2Bottom()
+    }, 80)
+  }
+}
+
+const printHandler = {
+  tokenList: [],
+  index: 0,
+  msgList: [], // { text: '', enabledPrint: false, transformAll: false }
+  msgIndex: 0,
+  $rootDom: null,
+  receiveMsg ({ str, $dom, done }) {
+    if (str.length <= 0) {
+      return
+    }
+    const lexer = marked.lexer;
+    this.$rootDom = $dom
+    if (this.msgList[this.msgIndex] === undefined) {
+      this.msgList[this.msgIndex] = {
+        text: '',
+        enabledPrint: false,
+      }
+    }
+    let curMsgItem = this.msgList[this.msgIndex]
+    if (str.includes('\n')) {
+      const [prevLine, nextLine] = str.split('\n')
+      curMsgItem.text += prevLine
+      if (curMsgItem.enabledPrint) {
+        const tokens = lexer(prevLine)
+        if (tokens && tokens.length > 0) {
+          tokens.forEach((tokenItem, index) => {
+            tokenItem.concatPrevLine = true
+            if (index === tokens.length - 1) {
+              // 标记这个token是这一行的结束token
+              tokenItem.lineEnd = true
+            }
+          })
+        }
+        this.receive($dom, tokens)
+      } else {
+        curMsgItem.enabledPrint = true
+        const tokens = lexer(curMsgItem.text)
+        if (tokens && tokens.length > 0) {
+          // 标记这个token是这一行的开始
+          tokens.forEach((tokenItem, index) => {
+            if (index === 0) {
+              tokenItem.lineStart = true
+            }
+          })
+        }
+        this.receive($dom, tokens)
+      }
+      // 标记这一行已经转换转换完毕
+      curMsgItem.transformAll = true
+      this.msgIndex++
+      if (this.msgList[this.msgIndex] === undefined) {
+        this.msgList[this.msgIndex] = {
+          text: nextLine,
+          enabledPrint: false,
+        }
+      }
+      curMsgItem = this.msgList[this.msgIndex]
+    } else {
+      curMsgItem.text += str
+    }
+    if (curMsgItem.enabledPrint) {
+      const tokens = lexer(str)
+      if (tokens && tokens.length > 0) {
+        tokens.forEach((tokenItem) => {
+          tokenItem.concatPrevLine = true
+        })
+      }
+      this.receive($dom, tokens)
+    } else {
+      // 判断markdown语法
+      const regex = /^\s*[\S]+\s+.*$/
+      const isMatch = regex.test(curMsgItem.text)
+      if (isMatch || curMsgItem.text.length > 5 || done) {
+        const tokens = lexer(curMsgItem.text)
+        if (tokens && tokens?.length > 0) {
+          tokens.forEach((tokenItem, index) => {
+            if ((isMatch || curMsgItem.text.length > 5) && index === 0) {
+              tokenItem.lineStart = true
+            } else if (done && index === tokens.length - 1) {
+              tokenItem.lineEnd = true
+              // 标记整个文档结束
+              tokenItem.markdownEnd = true
+            }
+          })
+        }
+        this.receive($dom, tokens)
+        curMsgItem.enabledPrint = true
+        // const trimText = trim(curMsgItem.text)
+        // const isMarkdown = this.isMarkdownLexical(trimText)
+        // if (isMarkdown) {
+        //   const tokens = lexer(curMsgItem.text)
+        //   this.receive($dom, tokens)
+        //   curMsgItem.enabledPrint = true
+        // } else {
+        //   // todo 当作段落语法来处理
+        // }
+      } else {
+        // 如果不符合，就不处理，等待接收下一次的字符
+      }
+    }
+  },
+  receive ($dom, tokens) {
+    this.tokenList = this.tokenList.concat(...tokens)
+    this.$rootDom = $dom
+    if (typingHandler.typing) {
+      return
+    }
+    // typingHandler.typingLine(printHandler.$rootDom, this.tokenList[this.index])
+    typingHandler.typingLine({
+      $dom: printHandler.$rootDom,
+      token: this.tokenList[this.index],
+      tokenList: this.tokenList,
+      tokenIndex: this.index,
+    })
+  },
+  update (typingInst) {
+    if (typingInst.typing) {
+      return
+    }
+    this.index += 1
+    if (!this.tokenList[this.index]) {
+      return
+    }
+    // typingHandler.typingLine(printHandler.$rootDom, this.tokenList[this.index])
+    typingHandler.typingLine({
+      $dom: printHandler.$rootDom,
+      token: this.tokenList[this.index],
+      tokenList: this.tokenList,
+      tokenIndex: this.index,
+    })
+  }
+}
+
+function trim (str) {
+  return str.replace(/^\s+|\s+$/g, '');
+}
+// 接收markdown数据流处理
+// const receiveCharHandler = {
+//   lineList: [],
+//   index: 0,
+//   markdownLexical: [
+//     '#',
+//     '>',
+//     '-',
+//     (str) => {
+//       const regex = /^\d+\.$/
+//       return regex.test(str)
+//     },
+//     '```',
+//     '|',
+
+//   ],
+//   isMarkdownLexical (str) {
+//     let flag = false
+//     for (let i = 0, len = this.markdownLexical; i < len; i++) {
+//       const item = this.markdownLexical[i]
+//       if (typeof item === 'function') {
+//         let tmpFlag = item(str)
+//         if (tmpFlag) {
+//           flag = true
+//           break
+//         }
+//         continue
+//       }
+//       if (str.startsWith(item)) {
+//         flag = true
+//         break
+//       }
+//     }
+//   },
+//   receive (str) {
+//     if (str.length <= 0) {
+//       return
+//     }
+//     if (this.lineList[this.index] === undefined) {
+//       this.lineList[this.index] = ''
+//     }
+//     let curLine = this.lineList[this.index]
+//     if (str.includes('\n')) {
+//       const [prevLine, nextLine] = str.split('\n')
+//       this.lineList[this.index] += prevLine
+//       this.index++
+//       this.lineList[this.index] = nextLine
+//       curLine = this.lineList[this.index]
+//     } else {
+//       this.lineList[this.index] += str
+//     }
+//     // 判断markdown语法
+//     const regex = /^\s*[\S]+\s+.*$/
+//     const isMatch = regex.test(curLine)
+//     if (isMatch) {
+//       const trimLine = trim(curLine)
+//       const isMarkdown = this.isMarkdownLexical(trimLine)
+//       if (isMarkdown) {
+//         // const tokens = lexer(typingLine)
+//         // printHandler.receive($textContent, tokens)
+//       }
+//     }
+//   },
+// }
+
 const getResponse = async ({ question, $textContent }) => {
-  const $text = document.createElement('div')
+  // const $text = document.createElement('div')
   // 加上光标样式
-  $text.setAttribute('class', 'cursor')
-  $textContent.appendChild($text)
+  // $text.setAttribute('class', 'cursor')
+  // $textContent.appendChild($text)
+  // let line = ''
+  // let concatPrevLine = false
+  const lexer = marked.lexer;
   fetch(`http://localhost:3000?question=${question}`)
     .then((response) => response.body)
     .then(async (body) => {
@@ -163,11 +516,52 @@ const getResponse = async ({ question, $textContent }) => {
         const { value, done } = await reader.read()
         const decoder = new TextDecoder()
         const str = decoder.decode(value)
-        // 输出到页面上
-        typing2Screen($text, str)
+        printHandler.receiveMsg({
+          str,
+          $dom: $textContent,
+          done,
+        })
+        console.log('@@@@str', str)
+        // line += str
+        // // console.log('@@@@line', line)
+        // // 一行一行地输出
+        // if (line.includes('\n')) {
+        //   console.log('@@@@line1', line)
+        //   const [typingLine, nextLine] = line.split('\n')
+        //   // const typingHtml = marked.parse(typingLine)
+        //   if (line.includes('标题1') || line.includes('标题2')) {
+        //     debugger
+        //   }
+        //   const tokens = lexer(typingLine)
+        //   // console.log('@@@tokens1', tokens)
+        //   // typing2Screen($textContent, tokens)
+        //   printHandler.receive($textContent, tokens)
+        //   line = nextLine
+        //   concatPrevLine = false
+        // } else if (line.length > 10) {
+        //   console.log('@@@@line2', line)
+        //   const tokens = lexer(line)
+        //   // console.log('@@@tokens2', tokens)
+        //   if (tokens && tokens.length > 0) {
+        //     tokens.forEach((tokenItem) => {
+        //       tokenItem.concatPrevLine = concatPrevLine
+        //     })
+        //   }
+        //   // typing2Screen($textContent, tokens)
+        //   printHandler.receive($textContent, tokens)
+        //   line = ''
+        //   concatPrevLine = true
+        // } else if (done) {
+        //   console.log('@@@@done line', line)
+        //   // const lineList = line.split('\n')
+        //   const tokens = lexer(line)
+        //   // typing2Screen($textContent, tokens)
+        //   printHandler.receive($textContent, tokens)
+        // }
+
         if (done) {
           // 回答结束，去掉光标效果
-          $text.setAttribute('class', '')
+          // $text.setAttribute('class', '')
           break
         }
       }
@@ -182,4 +576,7 @@ const handleChat = (question) => {
   // 拉取数据实现输出
   getResponse({ question, $textContent })
 }
+setTimeout(() => {
+  handleChat('test')
+}, 100)
 // 聊天逻辑实现 end -----------------------------------------
