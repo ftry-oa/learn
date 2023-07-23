@@ -158,7 +158,17 @@ const createElementHandler = {
       }
     })
     let $listBox = null
-    // todo
+    if (token.ordered) {
+      // 有序列表
+      $listBox = document.createElement('ol')
+    } else {
+      // 无序列表
+      $listBox = document.createElement('ul')
+    }
+    return {
+      $dom: doms,
+      $parent: $listBox,
+    }
   },
 }
 
@@ -256,7 +266,7 @@ const typingHandler = {
   typing: false,
   typingTimer: null,
   $prevDom: null,
-  typingParents: [],
+  $parentDom: null,
   // 输出到页面上
   typingLine ({ $dom, token, tokenList, tokenIndex }) {
     if (!createElementHandler[token.type]) {
@@ -265,9 +275,17 @@ const typingHandler = {
       return
     }
     let lineIndex = 0
-    let $lineDom = createElementHandler[token.type]({ token, tokenList, tokenIndex })
+    let $lineDom = null
     if (token.concatPrevLine) {
       $lineDom = this.$prevDom
+    } else {
+      const domResult = createElementHandler[token.type]({ token, tokenList, tokenIndex })
+      if (domResult?.$dom) {
+        $lineDom = domResult?.$dom
+        this.$parentDom = domResult?.$parent
+      } else {
+        $lineDom = domResult
+      }
     }
     // 对token对象实例产生副作用，增加属性标记所属的dom
     token.$dom = $lineDom
