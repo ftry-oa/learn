@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatGPT-demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous" />
+  <link rel="stylesheet" type="text/css" href="./style.css" />
+  <script
+    src="https://lf1-cdn-tos.bytegoofy.com/obj/iconpark/svg_26557_22.02953e2e3b75a8d69957e154b3202f31.js"></script>
+</head>
+
+<body>
+  <div class="root">
+    <aside id="left-aside">
+      <div class="aside-inner">
+        <div class="aside-top">
+          <button class="new-chat-btn">
+            <span class="icon-new-chart">
+              <svg class="iconpark-icon">
+                <use href="#add-new-chat"></use>
+              </svg>
+            </span>
+            New Chat
+          </button>
+          <span id="sidebar-btn" class="sidebar-btn">
+            <svg class="iconpark-icon">
+              <use href="#hide-sidebar"></use>
+            </svg>
+          </span>
+        </div>
+        <ul class="chat-list">
+          <li class="active">
+            <span class="icon-chat">
+              <svg class="iconpark-icon">
+                <use href="#chat-icon"></use>
+              </svg>
+            </span>
+            <div class="chat-list__name">
+              Chat1
+            </div>
+            <div class="icon-chat-opbox">
+              <span>
+                <svg class="iconpark-icon">
+                  <use href="#edit"></use>
+                </svg>
+              </span>
+              <span>
+                <svg class="iconpark-icon">
+                  <use href="#share"></use>
+                </svg>
+              </span>
+              <span>
+                <svg class="iconpark-icon">
+                  <use href="#delete"></use>
+                </svg>
+              </span>
+            </div>
+          </li>
+          <li>
+            <span class="icon-chat">
+              <svg class="iconpark-icon">
+                <use href="#chat-icon"></use>
+              </svg></span>
+            <div class="chat-list__name">
+              Chat2
+            </div>
+          </li>
+          <li>
+            <span class="icon-chat">
+              <svg class="iconpark-icon">
+                <use href="#chat-icon"></use>
+              </svg>
+            </span>
+            <div class="chat-list__name">
+              Chat3
+            </div>
+          </li>
+        </ul>
+        <div class="aside-bottom">
+          <span class="line-top"></span>
+          <ul>
+            <li>
+              <span class="chat-user">
+                <svg class="iconpark-icon">
+                  <use href="#user"></use>
+                </svg>
+              </span>
+              <span>
+                Upgrade to Plus
+              </span>
+              <span class="new-icon">
+                NEW
+              </span>
+            </li>
+            <li class="userinfo-item">
+              <img
+                src="https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fc-ssl.duitang.com%2Fuploads%2Fblog%2F202103%2F23%2F20210323142848_6a340.thumb.1000_0.jpeg&refer=http%3A%2F%2Fc-ssl.duitang.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1688969056&t=022c786aec872cde374f6a8ff3a70b17"
+                alt="" />
+              <span class="user-name">用户名</span>
+              <span class="chat-more">
+                <svg class="iconpark-icon">
+                  <use href="#more"></use>
+                </svg>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+    <section>
+      <div id="chat-box" class="chat">
+        <!-- 聊天内容通过JS动态添加 -->
+      </div>
+      <div class="chat-input">
+        <div class="chat-input-content">
+          <div class="chat-input-btn">
+            <button>
+              <span class="chat-refresh">
+                <svg class="iconpark-icon">
+                  <use href="#refresh"></use>
+                </svg>
+              </span>
+              Regenerate response
+            </button>
+          </div>
+          <div class="chat-input-textarea">
+            <textarea id="message-textarea" placeholder="Send a message"></textarea>
+            <button id="message-btn" class="chat-send-box">
+              <span class="chat-send-message">
+                <svg class="iconpark-icon">
+                  <use href="#send-message"></use>
+                </svg>
+              </span>
+            </button>
+          </div>
+        </div>
+        <p>
+          Free research preview. ChatGPT may produce inaccurate information about people, places, or facts. ChatGPT May
+          24 Version.
+        </p>
+      </div>
+    </section>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="main.js"></script>
+</body>
+
+</html>
